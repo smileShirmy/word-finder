@@ -21,13 +21,19 @@ function handleFileUpload(event: Event) {
   reader.onload = (e) => {
     const data = new Uint8Array(e.target?.result as ArrayBuffer);
     const workbook = XLSX.read(data, { type: "array" });
+    if (!workbook.SheetNames[0]) {
+      return;
+    }
     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    if (!firstSheet) {
+      return;
+    }
     const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as string[][];
 
     const result: WordItem[] = [];
     for (let i = 1; i < jsonData.length; i++) {
       const row = jsonData[i];
-      if (row[0] && row[2]) {
+      if (row && row[0] && row[2]) {
         result.push({
           id: Number(row[0]) || i,
           level: String(row[1] || ""),

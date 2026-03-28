@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from "vue-router";
 
-const route = useRoute()
-const router = useRouter()
+const route = useRoute();
+const router = useRouter();
 
 const tabs = [
-  { name: 'excel-to-json', label: 'Excel 转 JSON 工具' },
-  { name: 'blank', label: '空白页面' }
-]
+  { name: "word-match", label: "词语匹配" },
+  { name: "excel-to-json", label: "Excel 转 JSON 工具" },
+];
 
 function switchTab(name: string) {
-  router.push({ name })
+  router.push({ name });
 }
 </script>
 
@@ -59,8 +59,8 @@ function switchTab(name: string) {
 }
 
 .tabs button.active {
-  color: #4CAF50;
-  border-bottom-color: #4CAF50;
+  color: #4caf50;
+  border-bottom-color: #4caf50;
   background: white;
 }
 </style>
