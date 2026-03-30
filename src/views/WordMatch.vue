@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted, nextTick } from "vue";
 import wordsData from "@/services/words";
+import Sortable from "sortablejs";
 
 interface MatchResult {
   id: string;
@@ -24,6 +25,7 @@ const selectedLevels = ref<number[]>([]);
 let nextId = 2;
 const allCopySuccess = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
+const sortableInstances = ref<Map<number, Sortable>>(new Map()); // 存储每个卡片的 sortable 实例
 
 // 动态计算等级范围
 const maxLevel = Math.max(
@@ -117,26 +119,28 @@ function matchWords(inputIndex: number) {
         level: item.level,
         partOfSpeech: item.partOfSpeech,
         totalCount: 1, // 初始时总次数为1（当前文本）
-        textIds: [inputItem.id], // 出现在当前文本中
+        textIds: [], // 初始为空，由 updateGlobalCounts 填充
       };
     })
-    .sort((a, b) => a.word.localeCompare(b.word));
 
   // 更新全局次数
   updateGlobalCounts();
+
+  // 初始化拖拽
+  initSortable(inputIndex);
 }
 
 // 更新所有文本中词语的全局出现次数
 function updateGlobalCounts() {
   const countMap = new Map<string, { count: number; textIds: number[] }>();
 
-  // 统计所有文本中每个词语出现的文本数量和文本ID列表
-  textInputs.value.forEach((inputItem) => {
+  // 统计所有文本中每个词语出现的文本数量和文本序号列表
+  textInputs.value.forEach((inputItem, index) => {
     inputItem.results.forEach((result) => {
       const current = countMap.get(result.word) || { count: 0, textIds: [] };
       countMap.set(result.word, {
         count: current.count + 1,
-        textIds: [...current.textIds, inputItem.id],
+        textIds: [...current.textIds, index + 1], // 使用 index+1 作为文本序号
       });
     });
   });
@@ -167,10 +171,15 @@ function addInputText() {
       behavior: "smooth",
     });
   }, 100);
+  // 初始化新卡片的拖拽
+  const newIndex = textInputs.value.length - 1;
+  initSortable(newIndex);
 }
 
 function removeInputText(index: number) {
   if (textInputs.value.length > 1) {
+    // 清理拖拽实例
+    destroySortable(index);
     textInputs.value.splice(index, 1);
     // 更新全局次数
     updateGlobalCounts();
@@ -334,6 +343,59 @@ function toggleLevel(level: number) {
     selectedLevels.value.splice(index, 1);
   }
 }
+
+// 初始化拖拽排序
+function initSortable(index: number) {
+  nextTick(() => {
+    const listElement = document.querySelector(`#match-list-${index}`) as HTMLElement;
+    if (!listElement) return;
+
+    // 如果已存在实例,先销毁
+    if (sortableInstances.value.has(index)) {
+      sortableInstances.value.get(index)?.destroy();
+    }
+
+    // 创建新的 sortable 实例
+    const sortable = Sortable.create(listElement, {
+      animation: 150,
+      handle: ".drag-handle", // 使用拖拽手柄
+      ghostClass: "drag-ghost", // 拖拽时的样式
+      dragClass: "drag-item", // 正在拖拽的元素样式
+      onEnd: (evt) => {
+        const oldIndex = evt.oldIndex;
+        const newIndex = evt.newIndex;
+        if (oldIndex !== undefined && newIndex !== undefined && oldIndex !== newIndex) {
+          // 更新数组顺序
+          const inputItem = textInputs.value[index];
+          if (inputItem) {
+            const [removed] = inputItem.results.splice(oldIndex, 1);
+            if (removed) {
+              inputItem.results.splice(newIndex, 0, removed);
+            }
+          }
+        }
+      },
+    });
+
+    sortableInstances.value.set(index, sortable);
+  });
+}
+
+// 清理拖拽实例
+function destroySortable(index: number) {
+  const instance = sortableInstances.value.get(index);
+  if (instance) {
+    instance.destroy();
+    sortableInstances.value.delete(index);
+  }
+}
+
+// 组件挂载时初始化
+onMounted(() => {
+  textInputs.value.forEach((_, index) => {
+    initSortable(index);
+  });
+});
 </script>
 
 <template>
@@ -355,7 +417,7 @@ function toggleLevel(level: number) {
     </div>
 
     <div class="text-inputs-wrapper">
-      <div v-for="(inputItem, index) in textInputs" :key="inputItem.id" :id="`text-${inputItem.id}`" class="text-input-card">
+      <div v-for="(inputItem, index) in textInputs" :key="inputItem.id" :id="`text-${index + 1}`" class="text-input-card">
         <div class="card-header">
           <h3>文本 {{ index + 1 }}</h3>
           <button v-if="textInputs.length > 1" @click="removeInputText(index)" class="remove-card-btn">
@@ -385,12 +447,22 @@ function toggleLevel(level: number) {
               {{ inputItem.copySuccess ? "已复制" : "复制" }}
             </button>
           </div>
-          <ul class="match-list">
+          <ul :id="`match-list-${index}`" class="match-list">
             <li
               v-for="item in inputItem.results"
               :key="item.word"
               class="match-item"
             >
+              <div class="drag-handle" title="拖拽调整顺序">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="9" cy="6" r="1.5"/>
+                  <circle cx="15" cy="6" r="1.5"/>
+                  <circle cx="9" cy="12" r="1.5"/>
+                  <circle cx="15" cy="12" r="1.5"/>
+                  <circle cx="9" cy="18" r="1.5"/>
+                  <circle cx="15" cy="18" r="1.5"/>
+                </svg>
+              </div>
               <div class="item-info">
                 <span class="item-id">{{ item.id }}</span>
                 <span class="item-level">{{ item.level }}</span>
@@ -625,6 +697,7 @@ button.match-btn {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #eee;
   transition: background 0.2s;
+  cursor: default;
 }
 
 .match-item:last-child {
@@ -633,6 +706,39 @@ button.match-btn {
 
 .match-item:hover {
   background: #f5f5f5;
+}
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  cursor: grab;
+  color: #999;
+  margin-right: 0.5rem;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.drag-handle:hover {
+  color: #666;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* 拖拽时的样式 */
+.drag-ghost {
+  opacity: 0.4;
+  background: #e8f5e9;
+}
+
+.drag-item {
+  background: #fff3e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transform: scale(1.02);
 }
 
 .item-info {
