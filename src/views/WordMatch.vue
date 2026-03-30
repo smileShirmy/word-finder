@@ -34,6 +34,19 @@ function parseLevels(levelStr: string): number[] {
     return result;
   }
 
+  // 匹配中文括号范围格式: 5（7-9）或 5（7~9）
+  const bracketRangeMatch = levelStr.match(/(\d+)[（(](\d+)[-~](\d+)[）)]/);
+  if (bracketRangeMatch && bracketRangeMatch[1] && bracketRangeMatch[2] && bracketRangeMatch[3]) {
+    const mainLevel = parseInt(bracketRangeMatch[1]);
+    const rangeStart = parseInt(bracketRangeMatch[2]);
+    const rangeEnd = parseInt(bracketRangeMatch[3]);
+    result.push(mainLevel);
+    for (let i = rangeStart; i <= rangeEnd; i++) {
+      result.push(i);
+    }
+    return result;
+  }
+
   // 匹配多等级格式: 1（3） -> [1, 3]
   const multiMatch = levelStr.match(/[\d]+/g);
   if (multiMatch) {
