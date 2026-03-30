@@ -335,6 +335,13 @@ function copyAllTexts() {
   }, 2000);
 }
 
+// 一键匹配所有文本
+function matchAllTexts() {
+  textInputs.value.forEach((_, index) => {
+    matchWords(index);
+  });
+}
+
 function toggleLevel(level: number) {
   const index = selectedLevels.value.indexOf(level);
   if (index === -1) {
@@ -503,6 +510,9 @@ onMounted(() => {
       </div>
       <div class="floating-btn import-btn" @click="() => fileInput?.click()">
         导入
+      </div>
+      <div class="floating-btn match-all-btn" @click="matchAllTexts">
+        一键匹配
       </div>
       <input
         ref="fileInput"
@@ -892,5 +902,15 @@ button.match-btn {
 .import-btn:hover {
   background: #e65100;
   box-shadow: 0 6px 16px rgba(245, 124, 0, 0.5);
+}
+
+.match-all-btn {
+  background: #4caf50;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.match-all-btn:hover {
+  background: #388e3c;
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.5);
 }
 </style>
