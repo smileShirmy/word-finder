@@ -426,7 +426,10 @@ onMounted(() => {
     <div class="text-inputs-wrapper">
       <div v-for="(inputItem, index) in textInputs" :key="inputItem.id" :id="`text-${index + 1}`" class="text-input-card">
         <div class="card-header">
-          <h3>文本 {{ index + 1 }}</h3>
+          <div class="header-left">
+            <h3>文本 {{ index + 1 }}</h3>
+            <button @click="matchWords(index)" class="match-btn">匹配</button>
+          </div>
           <button v-if="textInputs.length > 1" @click="removeInputText(index)" class="remove-card-btn">
             删除此卡片
           </button>
@@ -435,13 +438,9 @@ onMounted(() => {
         <div class="input-section">
           <textarea
             v-model="inputItem.text"
-            rows="6"
+            rows="4"
             placeholder="请输入需要匹配的文本..."
           ></textarea>
-        </div>
-
-        <div class="action-section">
-          <button @click="matchWords(index)" class="match-btn">匹配</button>
         </div>
 
         <div class="output-section" v-if="inputItem.results.length > 0">
@@ -529,126 +528,161 @@ onMounted(() => {
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 0.75rem;
   font-family: sans-serif;
 }
 
 h1 {
-  margin-bottom: 2rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #2c3e50;
 }
 
 .filter-section {
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
+  padding: 0.6rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
 }
 
 .filter-section > label {
   display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #495057;
 }
 
 .level-checkboxes {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.3rem 0.6rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  gap: 0.3rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #dee2e6;
+  border-radius: 3px;
   cursor: pointer;
   user-select: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.15s;
 }
 
 .checkbox-label:has(input:checked) {
-  background: #e8f5e9;
-  border-color: #4caf50;
+  background: #d1f2eb;
+  border-color: #27ae60;
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.checkbox-label:hover {
+  border-color: #adb5bd;
+  background: #f8f9fa;
 }
 
 .checkbox-label input {
   cursor: pointer;
+  transform: scale(0.85);
 }
 
 .text-inputs-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  margin-bottom: 2rem;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .text-input-card {
-  background: #f9f9f9;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 1.5rem;
+  background: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f1f3f4;
 }
 
 .card-header h3 {
   margin: 0;
-  color: #333;
-  font-size: 1.2rem;
+  color: #2c3e50;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-right: 0.6rem;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
 }
 
 .remove-card-btn {
-  padding: 0.4rem 1rem;
-  background: #f44336;
-  font-size: 0.9rem;
+  padding: 0.25rem 0.6rem;
+  background: #e74c3c;
+  font-size: 0.8rem;
+  border-radius: 3px;
+  font-weight: 500;
 }
 
 .remove-card-btn:hover {
-  background: #d32f2f;
+  background: #c0392b;
 }
 
 label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   font-weight: 500;
+  font-size: 0.85rem;
+  color: #495057;
 }
 
 textarea {
   box-sizing: border-box;
   width: 100%;
-  padding: 0.75rem;
-  font-family: monospace;
-  font-size: 0.9rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 0.5rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  border: 1px solid #ced4da;
+  border-radius: 3px;
   resize: vertical;
+  min-height: 60px;
+  max-height: 150px;
+  line-height: 1.4;
 }
 
 textarea:focus {
   outline: none;
-  border-color: #4caf50;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
 }
 
 .input-section {
-  margin-bottom: 1rem;
-
-}
-
-.action-section {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
 button {
-  padding: 0.6rem 1.5rem;
+  padding: 0.4rem 0.9rem;
   background: #4caf50;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background-color 0.15s;
 }
 
 button:hover {
@@ -660,22 +694,27 @@ button.success {
 }
 
 button.add-btn {
-  background: #ff9800;
-  padding: 0.8rem 2rem;
-  font-size: 1.1rem;
+  background: #f39c12;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 button.add-btn:hover {
-  background: #f57c00;
+  background: #e67e22;
 }
 
 button.match-btn {
-  min-width: 120px;
+  min-width: 60px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .add-section {
   text-align: center;
-  padding: 1rem;
+  padding: 0.4rem;
+  margin-top: 0.4rem;
 }
 
 .output-header {
