@@ -23,6 +23,7 @@ const textInputs = ref<TextInput[]>([{ id: 1, text: "", results: [], copySuccess
 const selectedLevels = ref<number[]>([]);
 let nextId = 2;
 const allCopySuccess = ref(false);
+const fileInput = ref<HTMLInputElement | null>(null);
 
 // 动态计算等级范围
 const maxLevel = Math.max(
@@ -220,6 +221,78 @@ function scrollToText(textId: number) {
   }
 }
 
+function saveToFile() {
+  const data = {
+    version: "1.0",
+    timestamp: new Date().toISOString(),
+    textInputs: textInputs.value.map((item) => ({
+      id: item.id,
+      text: item.text,
+      results: item.results,
+    })),
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  
+  // 格式化时间：年月日时分秒
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  const timestamp = `${year}${month}${day}${hours}${minutes}${seconds}`;
+  
+  a.download = `word-finder-${timestamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importFromFile(event: Event) {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target?.result as string);
+      if (data.textInputs && Array.isArray(data.textInputs)) {
+        // 导入文本和匹配结果
+        textInputs.value = data.textInputs.map((item: any) => ({
+          id: item.id,
+          text: item.text || "",
+          results: item.results || [],
+          copySuccess: false,
+        }));
+
+        // 更新 nextId
+        const maxId = Math.max(...data.textInputs.map((item: any) => item.id));
+        nextId = maxId + 1;
+
+        // 更新全局次数统计
+        updateGlobalCounts();
+
+        alert("导入成功！");
+      } else {
+        alert("文件格式不正确！");
+      }
+    } catch (error) {
+      alert("解析文件失败，请确保是有效的 JSON 文件！");
+    }
+  };
+  reader.readAsText(file);
+
+  // 清空 input 以便重复导入同一文件
+  target.value = "";
+}
+
 function copyAllTexts() {
   const allParts: string[] = [];
 
@@ -348,9 +421,24 @@ function toggleLevel(level: number) {
       <button @click="addInputText" class="add-btn">添加新的文本输入框</button>
     </div>
 
-    <!-- 悬浮复制按钮 -->
-    <div class="floating-btn" @click="copyAllTexts" :class="{ success: allCopySuccess }">
-      {{ allCopySuccess ? "已复制" : "复制全部" }}
+    <!-- 悬浮按钮组 -->
+    <div class="floating-buttons">
+      <div class="floating-btn" @click="copyAllTexts" :class="{ success: allCopySuccess }">
+        {{ allCopySuccess ? "已复制" : "复制全部" }}
+      </div>
+      <div class="floating-btn save-btn" @click="saveToFile">
+        保存
+      </div>
+      <div class="floating-btn import-btn" @click="() => fileInput?.click()">
+        导入
+      </div>
+      <input
+        ref="fileInput"
+        type="file"
+        accept=".json"
+        style="display: none;"
+        @change="importFromFile"
+      />
     </div>
   </div>
 </template>
@@ -641,10 +729,18 @@ button.match-btn {
   background: #d32f2f;
 }
 
-.floating-btn {
+.floating-buttons {
   position: fixed;
   bottom: 2rem;
   right: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  z-index: 1000;
+}
+
+.floating-btn {
+  text-align: center;
   padding: 1rem 1.5rem;
   background: #9c27b0;
   color: white;
@@ -655,7 +751,6 @@ button.match-btn {
   font-weight: 600;
   box-shadow: 0 4px 12px rgba(156, 39, 176, 0.4);
   transition: all 0.3s;
-  z-index: 1000;
 }
 
 .floating-btn:hover {
@@ -671,5 +766,25 @@ button.match-btn {
 
 .floating-btn.success:hover {
   background: #1b5e20;
+}
+
+.save-btn {
+  background: #1976d2;
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4);
+}
+
+.save-btn:hover {
+  background: #1565c0;
+  box-shadow: 0 6px 16px rgba(25, 118, 210, 0.5);
+}
+
+.import-btn {
+  background: #f57c00;
+  box-shadow: 0 4px 12px rgba(245, 124, 0, 0.4);
+}
+
+.import-btn:hover {
+  background: #e65100;
+  box-shadow: 0 6px 16px rgba(245, 124, 0, 0.5);
 }
 </style>
